@@ -38,14 +38,17 @@ class Offer
     public function save()
     {
         if ($this->new == true) {
-
-
             $sth = $this->db->prepare('INSERT INTO useme (id, title,description,url) VALUES(:id, :title,:description,:url)');
             $sth->bindParam(':id', $this->id, PDO::PARAM_INT);
             $sth->bindParam(':title', $this->title, PDO::PARAM_STR);
             $sth->bindParam(':description', $this->description, PDO::PARAM_STR);
             $sth->bindParam(':url', $this->url, PDO::PARAM_STR);
-            $sth->execute();
+            try {
+                $sth->execute();
+            } catch (\PDOException $e) {
+                print "Error!: " . $e->getMessage() . "<br/>";
+                return false;
+            }
             return true;
         }
         return false;

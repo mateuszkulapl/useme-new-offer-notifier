@@ -17,11 +17,12 @@ foreach ($links as $link) {
 
 foreach ($offers as $offer) {
     if ($offer->isNew()) {
-        
-    echo "New offer</br>";
+
+        echo "New offer</br>";
         $offer->getDetails();
-        $offer->sendMail();
-        $offer->save();
+
+        if ($offer->save())
+            $offer->sendMail();
     }
     echo "Offer exist</br>";
 }
