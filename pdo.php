@@ -1,11 +1,16 @@
 <?php
 include("config.php");
-if(!(isset($host)&&isset($db)&&isset($user)&&isset($pass)&&isset($port)&&isset($charset)&&isset($email_sender)&&isset($email_recipient)))
-{
+if (!(isset($host) && isset($db) && isset($user) && isset($pass) && isset($port) && isset($charset) && isset($email_sender) && isset($email_recipient))) {
     echo "ERROR: Configuration variables not found!";
     exit();
 }
 
+
+/**
+ * Get the PDO object
+ *
+ * @return \PDO
+ */
 function getPDO()
 {
     global $host;
@@ -21,7 +26,7 @@ function getPDO()
         \PDO::ATTR_EMULATE_PREPARES   => false,
     ];
     $dsn = "mysql:host=$host;dbname=$db;charset=$charset;port=$port";
-    $pdo=null;
+    $pdo = null;
     try {
         $pdo = new \PDO($dsn, $user, $pass, $options);
     } catch (\PDOException $e) {

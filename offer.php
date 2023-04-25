@@ -10,6 +10,7 @@ class Offer
     private $new = null;
     private $db = null;
 
+
     public function __construct($db, $url, $id)
     {
         $this->db = $db;
@@ -17,6 +18,7 @@ class Offer
         $this->id = $id;
         $this->new = !($this->isInDatabase());
     }
+
 
     public function isInDatabase()
     {
@@ -35,25 +37,36 @@ class Offer
     {
         return $this->new;
     }
+
+    /**
+     * Save offer to database
+     *
+     * @return bool true if success, false if error
+     */
     public function save()
     {
-        if ($this->new == true) {
-            $sth = $this->db->prepare('INSERT INTO useme (id, title,description,url) VALUES(:id, :title,:description,:url)');
-            $sth->bindParam(':id', $this->id, PDO::PARAM_INT);
-            $sth->bindParam(':title', $this->title, PDO::PARAM_STR);
-            $sth->bindParam(':description', $this->description, PDO::PARAM_STR);
-            $sth->bindParam(':url', $this->url, PDO::PARAM_STR);
-            try {
-                $sth->execute();
-            } catch (\PDOException $e) {
-                print "Error!: " . $e->getMessage() . "<br/>";
-                return false;
-            }
-            return true;
+        if ($this->new != true)
+            return false;
+
+        $sth = $this->db->prepare('INSERT INTO useme (id, title,description,url) VALUES(:id, :title,:description,:url)');
+        $sth->bindParam(':id', $this->id, PDO::PARAM_INT);
+        $sth->bindParam(':title', $this->title, PDO::PARAM_STR);
+        $sth->bindParam(':description', $this->description, PDO::PARAM_STR);
+        $sth->bindParam(':url', $this->url, PDO::PARAM_STR);
+        try {
+            $sth->execute();
+        } catch (\PDOException $e) {
+            print "Error!: " . $e->getMessage() . "<br/>";
+            return false;
         }
-        return false;
+        return true;
     }
 
+    /**
+     * Get offer details from page
+     *
+     * @return void
+     */
     public function getDetails()
     {
         $pageSource = getPage($this->url);
@@ -63,22 +76,25 @@ class Offer
         // Restore error level
         libxml_use_internal_errors($internalErrors);
         $finder = new DomXPath($dom);
-
-
-
-        $classname = "job-details__main-title";
-        $titleNodes = $finder->query("//*[contains(concat(' ', normalize-space(@class), ' '), ' $classname ')]");
+        $titleClassname = "job-details__main-title";
+        $titleNodes = $finder->query("//*[contains(concat(' ', normalize-space(@class), ' '), ' $titleClassname ')]");
         $title = ($titleNodes[0]->textContent);
         $this->title = $title;
 
-        $classname = "job-details__main-desc";
-        $descNodes = $finder->query("//*[contains(concat(' ', normalize-space(@class), ' '), ' $classname ')]");
+        $descClassname = "job-details__main-desc";
+        $descNodes = $finder->query("//*[contains(concat(' ', normalize-space(@class), ' '), ' $descClassname ')]");
         $description = ($dom->saveHTML($descNodes[0]));
 
         $description = preg_replace('/[[:space:]]{2,}/', ' ', $description); //remove multiple spaces
         $this->description = $description;
     }
 
+
+    /**
+     * Send email with offer details
+     *
+     * @return void
+     */
     public function sendMail()
     {
         global $email_recipient;
@@ -93,7 +109,7 @@ class Offer
         $message .= $this->description;
         $message .= '<p></br><a href="' . $this->url . '">' . $this->url . '</a>';
         $message .= "<p></br>Wiadomość wysłana automatycznie " . date("d.m.Y H:i") . "</p>";
-        
+
         $message .= "</body></html>";
 
         $subject = 'Useme nowa oferta: ' . $this->title;
