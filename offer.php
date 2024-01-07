@@ -89,30 +89,58 @@ class Offer
         $this->description = $description;
     }
 
-
-    /**
-     * Send email with offer details
-     *
-     * @return void
-     */
     public function sendMail()
     {
         global $email_recipient;
         global $email_sender;
+
+        ini_set('default_charset', 'UTF-8');
+        $preferences = ['input-charset' => 'UTF-8', 'output-charset' => 'UTF-8'];
+        
+        $subject = 'Useme nowa oferta: ' . $this->title;
+        $encoded_subject = iconv_mime_encode('Subject', $subject, $preferences);
+        $encoded_subject = substr($encoded_subject, strlen('Subject: '));
+
         $headers = 'From: ' . $email_sender . ''       . "\r\n" .
             'Reply-To: ' . $email_sender . "\r\n";
         $headers .= "MIME-Version: 1.0" . "\r\n";
-        $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n X-Mailer: PHP/" . phpversion();
-        $message = "<html><head><title>" . $this->title . "</title></head><body>";
 
-        $message .= '<h1>' . $this->title . '</h1>';
-        $message .= $this->description;
-        $message .= '<p></br><a href="' . $this->url . '">' . $this->url . '</a>';
-        $message .= "<p></br>Wiadomość wysłana automatycznie " . date("d.m.Y H:i") . "</p>";
+        $boundary = uniqid('np');
+        $headers .= "Content-type: multipart/alternative; boundary=$boundary" . "\r\n";
+    
+        $htmlVersion = $this->getHtmlVersion();
+        $plainTextVersion= $this->getPlainTextVersion();
 
-        $message .= "</body></html>";
-
-        $subject = 'Useme nowa oferta: ' . $this->title;
-        mail($email_recipient, $subject, $message, $headers);
+        $message = "--$boundary\r\n";
+        $message .= "Content-type: text/plain; charset=UTF-8\r\n";
+        $message .= "Content-transfer-encoding: 8bit\r\n\r\n";
+        $message .= $plainTextVersion . "\r\n";
+        
+        $message .= "--$boundary\r\n";
+        $message .= "Content-type: text/html; charset=UTF-8\r\n";
+        $message .= "Content-transfer-encoding: 8bit\r\n\r\n";
+        $message .= $htmlVersion . "\r\n";
+        $message .= "--$boundary--";
+        mail($email_recipient, $encoded_subject, $message, $headers);
     }
+
+    private function getHtmlVersion()
+    {
+        $htmlVersion = "<html><head><meta charset='UTF-8'></head><body>";
+        $htmlVersion .= "<h1>" . $this->title . "</h1>";
+        $htmlVersion .= $this->description;
+        $htmlVersion .= '<p></br><a href="' . $this->url . '">' . $this->url . '</a>';
+        $htmlVersion .= "<p>Wiadomość wysłana automatycznie " . date("d.m.Y H:i") . "</p>";
+        $htmlVersion .= "</body></html>";
+        return $htmlVersion;
+    }
+    private function getPlainTextVersion()
+    {
+        $plainTextVersion = "" . $this->title . "\r\n";
+        $plainTextVersion .= "" . strip_tags($this->description)."\r\n";
+        $plainTextVersion .= "" . $this->url."\r\n";
+        $plainTextVersion .= "Wiadomość wysłana automatycznie " . date("d.m.Y H:i") . "\r\n";
+        return $plainTextVersion;
+    }
+
 }
