@@ -5,6 +5,8 @@ class Offer
     private $id = null;
     private $title = null;
     private $description = null;
+    private $budget = null;
+    private $employer_name = null;
     private $add_time = null;
     private $url = null;
     private $new = null;
@@ -48,10 +50,12 @@ class Offer
         if ($this->new != true)
             return false;
 
-        $sth = $this->db->prepare('INSERT INTO useme (id, title,description,url) VALUES(:id, :title,:description,:url)');
+        $sth = $this->db->prepare('INSERT INTO useme (id, title,description,budget,employer_name,url) VALUES(:id, :title,:description,:budget,:employer_name,:url)');
         $sth->bindParam(':id', $this->id, PDO::PARAM_INT);
         $sth->bindParam(':title', $this->title, PDO::PARAM_STR);
         $sth->bindParam(':description', $this->description, PDO::PARAM_STR);
+        $sth->bindParam(':budget', $this->budget, PDO::PARAM_STR);
+        $sth->bindParam(':employer_name', $this->employer_name, PDO::PARAM_STR);
         $sth->bindParam(':url', $this->url, PDO::PARAM_STR);
         try {
             $sth->execute();
@@ -87,6 +91,15 @@ class Offer
 
         $description = preg_replace('/[[:space:]]{2,}/', ' ', $description); //remove multiple spaces
         $this->description = $description;
+
+        $budgetXPath = './/*[contains(concat(" ",normalize-space(@class)," ")," overview__item--budget ")]/p/span';
+        $budgetNodes = $finder->query($budgetXPath);
+        $this->budget =  $budgetNodes[0]->textContent;
+
+        $employerNameXPath = './/*[contains(concat(" ",normalize-space(@class)," ")," job-details__main ")]//*[contains(concat(" ",normalize-space(@class)," ")," employer__name ")]';
+        $employerNameNodes = $finder->query($employerNameXPath);
+        $this->employer_name = $employerNameNodes[0]->textContent;
+
     }
 
     public function sendMail()
@@ -129,6 +142,8 @@ class Offer
         $htmlVersion = "<html><head><meta charset='UTF-8'></head><body>";
         $htmlVersion .= "<h1>" . $this->title . "</h1>";
         $htmlVersion .= $this->description;
+        $htmlVersion .= "<h2>Budżet: " . $this->budget . "</h2>";
+        $htmlVersion .= "<h2>Zleceniodawca: " . $this->employer_name . "</h2>";
         $htmlVersion .= '<p></br><a href="' . $this->url . '">' . $this->url . '</a>';
         $htmlVersion .= "<p>Wiadomość wysłana automatycznie " . date("d.m.Y H:i") . "</p>";
         $htmlVersion .= "</body></html>";
@@ -138,6 +153,8 @@ class Offer
     {
         $plainTextVersion = "" . $this->title . "\r\n";
         $plainTextVersion .= "" . strip_tags($this->description)."\r\n";
+        $plainTextVersion .= "Budżet: " . $this->budget . "\r\n";
+        $plainTextVersion .= "Zleceniodawca: " . $this->employer_name . "\r\n";
         $plainTextVersion .= "" . $this->url."\r\n";
         $plainTextVersion .= "Wiadomość wysłana automatycznie " . date("d.m.Y H:i") . "\r\n";
         return $plainTextVersion;
