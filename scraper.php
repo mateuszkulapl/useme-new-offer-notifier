@@ -7,7 +7,7 @@ $pdo = getPDO();
 $homepage = getPage('https://useme.com/pl/jobs/');
 
 $offers = [];
-$regex = '/<a\s*href="(.*?,(\d+)\/)"\s*class="job__title-link/m';
+$regex = '/<a\s*href="(.*?,(\d+)\/)"\s*class="[^"]*job__title-link/m';
 $links = [];
 preg_match_all($regex, $homepage, $links, PREG_SET_ORDER, 0);
 
