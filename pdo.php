@@ -1,5 +1,5 @@
 <?php
-include("config.php");
+
 if (!(isset($host) && isset($db) && isset($user) && isset($pass) && isset($port) && isset($charset) && isset($email_sender) && isset($email_recipient))) {
     echo "ERROR: Configuration variables not found!";
     exit();

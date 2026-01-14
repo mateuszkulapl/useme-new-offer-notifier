@@ -1,10 +1,16 @@
 <?php
+include("config.php");
 include("offer.php");
 include("pdo.php");
 
+if (!(isset($useme_direct_ip))) {
+    echo "ERROR: Configuration variables not found!";
+    exit();
+}
+
 $pdo = getPDO();
 
-$homepage = getPage('https://useme.com/pl/jobs/');
+$homepage = getPage('https://useme.com/pl/jobs/', $useme_direct_ip);
 
 $offers = [];
 $regex = '/<a\s*href="(.*?,(\d+)\/)"\s*class="[^"]*job__title-link/m';
@@ -27,15 +33,27 @@ foreach ($offers as $offer) {
     echo "Offer exist</br>";
 }
 
-function getPage($url)
+function getPage($url, string $ip)
 {
+    $parsed = parse_url($url);
+    $host = $parsed['host'];
+
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-    curl_setopt($ch, CURLOPT_HEADER, false);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_REFERER, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+
+    curl_setopt_array($ch, [
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_HEADER => false,
+        CURLOPT_FOLLOWLOCATION => false,
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => [
+            "Host: {$host}"
+        ],
+        CURLOPT_RESOLVE => [
+            "{$host}:443:{$ip}"
+        ],
+    ]);
+
     $result = curl_exec($ch);
     curl_close($ch);
 
